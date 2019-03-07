@@ -1,0 +1,9 @@
+model:
+  name: 'yolov3-tiny'
+  backbone: ''
+  anchors: [[10, 14], [23, 27], [37, 58], [81, 82], [135, 169], [344, 319]]
+  anchor_indices: [[0, 1, 2], [3, 4, 5]]
+train:
+  backbone_weight: ''
+demo:
+  conf_thresh: 0.5

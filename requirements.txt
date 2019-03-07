@@ -1,0 +1,8 @@
+matplotlib
+numpy
+opencv-python
+pycocotools
+tensorboardX>=1.6
+torch>=1.0.1
+tqdm
+yacs>=0.1.6

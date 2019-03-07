@@ -1,0 +1,91 @@
+model:
+  name: 'yolov3'
+  backbone: 'darknet53'
+  anchors: [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]]
+  anchor_indices: [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
+data:
+  n_classes: 80
+  train_image_dir: '~/datasets/coco2017/train2017'
+  val_image_dir: '~/datasets/coco2017/val2017'
+  train_annotation: '~/datasets/coco2017/annotations/instances_train2017.json'
+  val_annotation: '~/datasets/coco2017/annotations/instances_val2017.json'
+train:
+  backbone_weight: ''
+  ckpt_path: ''
+  resume: False
+  device: 'cuda'
+  image_size: 608
+  channel_order: 'bgr'
+  batch_size: 64
+  subdivision: 8
+  optimizer: 'sgd'
+  base_lr: 0.001
+  momentum: 0.9
+  nesterov: False
+  weight_decay: 0.0005
+  gradient_clip: 0
+  bbox_min_size: 2
+  max_targets: 50
+  iou_thresh: 0.7
+  start_iter: 0
+  seed: 0
+  outdir: 'results'
+  log_period: 10
+  ckpt_period: 5000
+  tensorboard: True
+  scheduler:
+    max_iterations: 500000
+    warmup_type: 'exponential'
+    exponent: 4
+    scheduler_type: 'multistep'
+    warmup_steps: 1000
+    warmup_start_factor: 0.001
+    milestones: [400000, 450000]
+    lr_decay: 0.1
+    lr_min_factor: 0.001
+  augmentation:
+    min_size: 320
+    max_size: 608
+    random_horizontal_flip: True
+    jitter: 0.3
+    random_padding: True
+    random_distortion: True
+    distortion:
+      hue: 0.1
+      saturation: 1.5
+      exposure: 1.5
+  dataloader:
+    num_workers: 2
+    drop_last: True
+    pin_memory: False
+  distributed: False
+  dist:
+    backend: 'nccl'
+    init_method: 'env://'
+    world_size: -1
+    node_rank: -1
+    local_rank: 0
+validation:
+  ckpt_path: ''
+  device: 'cuda'
+  image_size: 416
+  channel_order: 'bgr'
+  batch_size: 128
+  conf_thresh: 0.005
+  nms_thresh: 0.45
+  outdir: ''
+  dataloader:
+    num_workers: 2
+    pin_memory: False
+demo:
+  ckpt_path: ''
+  device: 'cuda'
+  image_size: 416
+  channel_order: 'bgr'
+  conf_thresh: 0.8
+  nms_thresh: 0.45
+  category_names: 'data/coco_names.json'
+  image_path: ''
+  image_dir: ''
+  video_path: ''
+  camera: False
