@@ -44,8 +44,9 @@ class YOLOv3Base(nn.Module):
         module = importlib.import_module(f'yolov3.models.{backbone_name}')
         self.backbone = getattr(module, 'FeatureExtractor')()
 
-        outputs = self.backbone(
-            torch.zeros((1, 3, 64, 64), dtype=torch.float32))
+        with torch.no_grad():
+            outputs = self.backbone(
+                torch.zeros((1, 3, 64, 64), dtype=torch.float32))
         skip_channels = [output.size(1) for output in outputs]
         in_channels1 = skip_channels[2]
         out_channels1 = in_channels1 // 2
@@ -77,8 +78,9 @@ class YOLOv3Base(nn.Module):
 class YOLOv3(YOLOv3Base):
     def __init__(self, config):
         super().__init__(config.model.backbone)
-        outputs = super().forward(
-            torch.zeros((1, 3, 64, 64), dtype=torch.float32))
+        with torch.no_grad():
+            outputs = super().forward(
+                torch.zeros((1, 3, 64, 64), dtype=torch.float32))
         n_channels = [output.size(1) for output in outputs]
         self.conv1 = ConvBN(
             n_channels[0],
