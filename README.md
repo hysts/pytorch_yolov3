@@ -9,22 +9,20 @@ With this repository, you can
 * train with multiple GPUs
 * train with COCO-style datasets
 * easily change backbone architecture
-* reproduce training results (to some extent. still work in progress...)
+* reproduce training results
 
 
 
-## Training Results
+## Training Results on COCO
 
-|                            | Train     | Val       | image size | AP50_95 | AP50  |
-|:---------------------------|:----------|:----------|:----------:|:-------:|:-----:|
-| Paper                      | COCO 2014 | COCO 2014 |    416     |  31.0   | 55.3  |
-| Paper                      | COCO 2014 | COCO 2014 |    608     |  33.0   | 57.9  |
-| Converted pretrained model | COCO 2014 | COCO 2014 |    416     |  30.5   | 54.8  |
-| Converted pretrained model | COCO 2014 | COCO 2014 |    608     |  32.4   | 57.4  |
-| This repository            | COCO 2017 | COCO 2017 |    416     |  30.6   | 52.6  |
-| This repository            | COCO 2017 | COCO 2017 |    608     |  31.2   | 53.6  |
+| Model                              | Train     | Test     | AP50_95@416 | AP50_95@608 | AP50@416 | AP50@608 |
+|:-----------------------------------|:----------|:--------:|:-----------:|:-----------:|:--------:|:--------:|
+| Paper                              | train+val | test-dev |    31.0     |    33.0     |   55.3   |   57.9   |
+| Converted pretrained model         | train2014 | test-dev |    30.5     |    31.9     |   54.4   |   56.5   |
+| This repository                    | train2017 | test-dev |    31.8     |    33.3     |   53.5   |   55.8   |
+| This repository (cosine annealing) | train2017 | test-dev |    32.0     |    33.7     |   53.7   |   56.2   |
 
-For evaluation on COCO 2014, see [this section](#evaluation-using-coco-2014).
+For more detailed experiments, see [this section](#experiments).
 
 
 
@@ -198,7 +196,7 @@ single-GPU training, you need to change them in case of multi-GPU training.
 If you keep the batch size, you need to raise the learning rate and reduce
 the number of iterations. In this case, multiplying learning rate by the number
 of GPUs following linear scaling rule
-([arXiv:1706.02677](https://arxiv.org/abs/1706.02677)) would be a good idea.
+([arXiv:1706.02677](https://arxiv.org/abs/1706.02677), [arXiv:1711.07240](https://arxiv.org/abs/1711.07240)) would be a good idea.
 Or, you could divide the batch size by the number of GPUs and reduce
 `subdivision` so that `batch_size` / `subdivision` (number of images processed
 by each GPU at a time) stays the same.
@@ -272,49 +270,27 @@ python -u ./scripts/evaluate_detection_results.py \
     --outdir /path/to/output/directory
 ```
 
-### Evaluation using COCO 2014
 
-Darknet pretrained models are trained on their own train/val split based on
-that of COCO 2014, and that's different from COCO 2017 train/val split.
-In order to evaluate darknet pretrained models with this repository, you
-need to create JSON version of it that this repository can handle.
 
-Following command downloads the list of validation file names used for darknet
-pretrained models, and creates annotation files in JSON format and symbolic
-links to COCO 2017 images.
-(You need to download COCO 2017 dataset before running this.)
+## Experiments
 
-```bash
-bash scripts/tools/create_coco2014_json.sh ~/datasets/coco2017 ~/datasets/coco2014
-```
+### Comparison with converted pretrained model on test-dev
 
-Usage of this script is as follows.
+Note that following comparison is not perfectly fair because training data and hyperparameters are not the same.
+* Darknet pretrained model uses their own split of COCO, while we use COCO 2017 official train/val split.
+* Hyperparameters used for darknet pretrained model is unknown.
 
-```bash
-bash scripts/tools/create_coco214_json.sh COCO2017_DIR OUTPUT_DIR
-```
+| model            | base_lr | schedule | iter   | size | train     | AP   | AP50 | AP75 | APs  | APm  | APl  | AR1  | AR10 | AR100 | ARs  | ARm  | ARl  |
+|:-----------------|:--------|:---------|:-------|:----:|:----------|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:-----:|:----:|:----:|:----:|
+| Paper            |         | step     |        | 416  | train+val | 31.0 | 55.3 |      |      |      |      |      |      |       |      |      |      |
+| pretrained model |         | step     |        | 416  | train2014 | 30.5 | 54.4 | 31.1 | 13.6 | 32.3 | 42.8 | 26.2 | 39.1 | 40.8  | 21.6 | 43.4 | 55.6 |
+| this repository  |  0.005  | step     | 460000 | 416  | train2017 | 31.8 | 53.5 | 33.7 | 13.6 | 33.8 | 44.6 | 27.1 | 40.5 | 42.2  | 22.2 | 44.5 | 57.2 |
 
-The script above generates files like this (images are symbolic links):
-
-```text
-OUTPUT_DIR
-├── annotations
-│   ├── instances_train2014.json
-│   └── instances_val2014.json
-├── train2014
-│   ├── 000000000009.jpg
-│   ├── 000000000025.jpg
-...
-│   └── 000000581929.jpg
-└── val2014
-    ├── 000000000164.jpg
-    ├── 000000000192.jpg
-    ...
-    └── 000000581899.jpg
-```
-
-Using outputs of this script, you can evaluate darknet pretrained models on
-COCO 2014  as usual.
+| model            | base_lr | schedule | iter   | size | train     | AP   | AP50 | AP75 | APs  | APm  | APl  | AR1  | AR10 | AR100 | ARs  | ARm  | ARl  |
+|:-----------------|:--------|:---------|:-------|:----:|:----------|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:----:|:-----:|:----:|:----:|:----:|
+| Paper            |         | step     |        | 608  | train+val | 33.0 | 57.9 | 34.4 | 18.3 | 35.4 | 41.9 |      |      |       |      |      |      |
+| pretrained model |         | step     |        | 608  | train2014 | 31.9 | 56.5 | 33.1 | 17.5 | 34.4 | 40.6 | 27.2 | 41.2 | 43.0  | 26.3 | 45.4 | 54.1 |
+| this repository  |  0.005  | step     | 460000 | 608  | train2017 | 33.3 | 55.8 | 35.4 | 18.4 | 36.2 | 40.9 | 27.8 | 42.9 | 44.9  | 28.7 | 46.9 | 54.6 |
 
 
 
@@ -323,4 +299,13 @@ COCO 2014  as usual.
 * Redmon, Joseph, Santosh Divvala, Ross Girshick, and Ali Farhadi. "You Only Look Once: Unified, Real-Time Object Detection." The IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2016. [link](http://openaccess.thecvf.com/content_cvpr_2016/html/Redmon_You_Only_Look_CVPR_2016_paper.html), [arXiv:1506.02640](https://arxiv.org/abs/1506.02640), [Project website](https://pjreddie.com/darknet/yolov1), [GitHub](https://github.com/pjreddie/darknet)
 * Redmon, Joseph, and Ali Farhadi. "YOLO9000: Better, Faster, Stronger." The IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2017. [link](http://openaccess.thecvf.com/content_cvpr_2017/html/Redmon_YOLO9000_Better_Faster_CVPR_2017_paper.html), [arXiv:1612.08242](https://arxiv.org/abs/1612.08242), [Project website](https://pjreddie.com/darknet/yolov2), [GitHub](https://github.com/pjreddie/darknet)
 * Redmon, Joseph, and Ali Farhadi. "YOLOv3: An Incremental Improvement." arXiv preprint arXiv:1804.02767 (2018). [arXiv:1804.02767](https://arxiv.org/abs/1804.02767), [Project website](https://pjreddie.com/darknet/yolo), [GitHub](https://github.com/pjreddie/darknet)
+
+* Loshchilov, Ilya, and Frank Hutter. "SGDR: Stochastic Gradient Descent with Warm Restarts." In International Conference on Learning Representations (ICLR), 2017. [link](https://openreview.net/forum?id=Skq89Scxx), [arXiv:1608.03983](https://arxiv.org/abs/1608.03983), [GitHub](https://github.com/loshchil/SGDR)
+* Goyal, Priya, Piotr Dollár, Ross Girshick, Pieter Noordhuis, Lukasz Wesolowski, Aapo Kyrola, Andrew Tulloch, Yangqing Jia, and Kaiming He, "Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour." arXiv preprint arXiv:1706.02677 (2017). [arXiv:1706.02677](https://arxiv.org/abs/1706.02677)
+* Peng, Chao, Tete Xiao, Zeming Li, Yuning Jiang, Xiangyu Zhang, Kai Jia, Gang Yu, and Jian Sun, "MegDet: A Large Mini-Batch Object Detector." arXiv preprint arXiv:1711.07240 (2017). [arXiv:1711.07240](https://arxiv.org/abs/1711.07240)
+* Akiba, Takuya, Tommi Kerola, Yusuke Niitani, Toru Ogawa, Shotaro Sano, and Shuji Suzuki, "PFDet: 2nd Place Solution to Open Images Challenge 2018 Object Detection Track." arXiv preprint arXiv:1809.00778 (2018). [arXiv:1809.00778](https://arxiv.org/abs/1809.00778)
+* He, Kaiming, Ross Girshick, and Piotr Dollár, "Rethinking ImageNet Pre-training." arXiv preprint arXiv:1811.08883 (2018). [arXiv:1811.08883](https://arxiv.org/abs/1811.08883)
+* Zhang, Zhi, Tong He, Hang Zhang, Zhongyuan Zhang, Junyuan Xie, and Mu Li, "Bag of Freebies for Training Object Detection Neural Networks." arXiv preprint arXiv:1902.04103 (2019). [arXiv:1902.04103](https://arxiv.org/abs/1902.04103)
+
+
 
